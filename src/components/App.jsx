@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { loadPictures } from '../servises/api';
@@ -29,9 +29,10 @@ const toastParams = {
 export function App() {
   const [gallery, setGallery] = useState([]);
   const [status, setStatus] = useState(Status.IDLE);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [select, setSelect] = useState(null);
+  const [total, setTotal] = useState(0);
 
   const handleSearchSubmit = async searchIn => {
     const searchLine = searchIn.trim();
@@ -39,34 +40,39 @@ export function App() {
       toast.error('Enter search words', toastParams);
       return;
     }
-    setStatus(Status.LOAD);
-    setGallery([]);
-
-    const newPictures = await loadPictures(searchLine, 1);
-
-    if (newPictures.hits.length === 0) {
-      toast.error('Data not found', toastParams);
-    }
-    setGallery(newPictures.hits);
-    setSearch(searchLine);
     setPage(1);
-    setStatus(Status.RESOLVED);
+    setSearch(searchLine);
   };
 
-  const handleMore = async () => {
+  const handleMore = () => {
+    setPage(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    if (!search) return;
+
     setStatus(Status.LOAD);
 
-    const newPictures = await loadPictures(search, page + 1);
+    loadPictures(search, page)
+      .then(newPictures => {
+        if (newPictures.hits.length === 0) {
+          toast.error('Data not found', toastParams);
+        }
 
-    const statusTmp =
-      gallery.length + newPictures.hits.length >= newPictures.total
-        ? Status.IDLE
-        : Status.RESOLVED;
+        setGallery(prev => {
+          if (page === 1) {
+            return [...newPictures.hits];
+          }
+          return [...prev, ...newPictures.hits];
+        });
 
-    setGallery(prev => [...prev, ...newPictures.hits]);
-    setPage(prev => prev + 1);
-    setStatus(statusTmp);
-  };
+        setTotal(newPictures.total);
+        setStatus(Status.RESOLVED);
+      })
+      .catch(err => {
+        toast.error(err, toastParams);
+      });
+  }, [search, page]);
 
   const handleSelectedPicture = select => {
     setSelect(select);
@@ -83,7 +89,8 @@ export function App() {
       {status === Status.LOAD && <Loader />}
       {status !== Status.LOAD &&
         status !== Status.IDLE &&
-        gallery.length !== 0 && <Button onClick={handleMore} />}
+        gallery.length !== 0 &&
+        total !== gallery.length && <Button onClick={handleMore} />}
       {select && <Modal select={select} onClose={handleCloseModal} />}
       <ToastContainer />
     </div>
