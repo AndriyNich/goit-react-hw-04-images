@@ -1,40 +1,33 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Overlay, ModalWraper } from './Modal.styled';
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+export function Modal({ select: { url, alt }, onClose }) {
+  useEffect(() => {
+    const eventID = window.addEventListener('keydown', handleKeyDown);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+    return window.removeEventListener('keydown', eventID);
+  });
 
-  handleKeyDown = event => {
+  const handleKeyDown = event => {
     if (event.code === 'Escape') {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  handleClick = event => {
+  const handleClick = event => {
     if (event.currentTarget === event.target) {
-      this.props.onClose();
+      onClose();
     }
   };
 
-  render() {
-    const {
-      select: { url, alt },
-    } = this.props;
-    return (
-      <Overlay onClick={this.handleClick}>
-        <ModalWraper>
-          <img src={url} alt={alt} />
-        </ModalWraper>
-      </Overlay>
-    );
-  }
+  return (
+    <Overlay onClick={handleClick}>
+      <ModalWraper>
+        <img src={url} alt={alt} />
+      </ModalWraper>
+    </Overlay>
+  );
 }
 
 Modal.propTypes = {

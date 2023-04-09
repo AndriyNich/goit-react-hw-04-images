@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import throttle from 'lodash.throttle';
 import { AiOutlineSearch } from 'react-icons/ai';
@@ -11,6 +11,8 @@ import {
 } from './Searchbar.styled';
 
 export const Searchbar = ({ onSubmit }) => {
+  const [search, setSearch] = useState('');
+
   const handleSendSubmit = function (value) {
     onSubmit(value);
   };
@@ -19,7 +21,7 @@ export const Searchbar = ({ onSubmit }) => {
 
   const handleSubmit = event => {
     event.preventDefault();
-    handleSubmitThrottle(event.target.elements.search.value);
+    handleSubmitThrottle(search);
   };
 
   return (
@@ -36,6 +38,8 @@ export const Searchbar = ({ onSubmit }) => {
           autocomplete="off"
           autoFocus
           placeholder="Search images and photos"
+          value={search}
+          onChange={event => setSearch(event.target.value)}
         />
       </FormSearch>
     </HeaderSearch>
